@@ -23,10 +23,10 @@
   ; TODO: - look up plant data in Redis database
   ;       - plot fancy moisture/light level graphs (with CSS/JS?)
   {'moisture {'raw 0.2
-              'state 'CRIT} ; one of 'CRIT 'LOW 'OK 'TOOMUCH
+              'state 'crit} ; one of 'crit 'low 'ok 'toomuch
    'type 'Ficus
-   'temperature {'raw 10.3 ; degrees celsius
-                 'state 'CRIT} ; same as for moisture
+   'temperature {'raw 20.3 ; degrees celsius
+                 'state 'ok} ; same as for moisture
    'light 0.7
    'name name})
 

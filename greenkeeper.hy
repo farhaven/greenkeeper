@@ -4,12 +4,20 @@
 (import
   json
   time
-  [flask [Flask Response]]
+  logging
+  jinja2
+  os
+  [flask [Flask Response send-from-directory]]
   [HyREPL.server [start-server]]
   [HyREPL.middleware.eval :as repl])
 
 (setv repl.eval-module (globals))
-(def app (Flask --name--))
+(def stream-handler (logging.StreamHandler))
+(.setLevel stream-handler logging.WARNING)
+
+(def app (Flask --name-- :static-url-path ""))
+(.addHandler (. app logger) stream-handler)
+
 
 (defn get-plant-data [&optional [name ""]]
   ; TODO: - look up plant data in Redis database
@@ -17,34 +25,61 @@
   {'moisture {'raw 0.2
               'state 'CRIT} ; one of 'CRIT 'LOW 'OK 'TOOMUCH
    'type 'Ficus
-   'temperature 10.3 ; degrees celsius
+   'temperature {'raw 10.3 ; degrees celsius
+                 'state 'CRIT} ; same as for moisture
    'light 0.7
    'name name})
 
 (defn render-plant [name]
   (let [[r (Response :headers {"Content-Type" "application/json"})]]
-    (.set-data r (json.dumps (get-plant-data name)))
+    (.set-data r (json.dumps (get-plant-data name) :indent 2))
     r))
 
-(defn render-index []
-  (+ "<?doctype html>"
-     "<html><head></head>"
-     "<body><ul>"
-     "<li><a href=\"/plant\">/plant</a></li>"
-     "<li><a href=\"/plant/Bob\">/plant/Bob</a></li>"
-     "</ul></body></html>"))
-
 (with-decorator
-  (.route app "/plant" :methods ["GET"] :defaults {'name "Fred"})
   (.route app "/plant/<name>" :methods ["GET"])
   (fn [name]
     (render-plant name)))
 
 
+(defn get-plants []
+  (dict-comp
+    n
+    (get-plant-data n)
+    [n ["Bob" "Fred"]]))
+
+(defn render-plants []
+  (let [[r (Response :headers {"Content-Type" "application/json"})]]
+    (.set-data r (json.dumps (get-plants) :indent 2))
+    r))
+
+(with-decorator
+  (.route app "/plants")
+  (fn []
+    (render-plants)))
+
+(with-decorator
+  (.route app "/s/<path:path>")
+  (fn [path]
+    (send-from-directory (os.path.join (os.getcwd) "static") path)))
+
+
+(def templates {})
+
+(defn render-template [name &kwargs kw]
+  (unless (in name templates)
+    (let [[txt (with [[f (open (os.path.join "templates" name))]] (.read f))]
+          [templ (jinja2.Template txt)]]
+      (assoc templates name templ)))
+  (apply (. (get templates name) render) [] kw))
+
+(defn render-index []
+  (render-template "index.html"))
+
 (with-decorator
   (.route app "/" :methods ["GET"])
   (fn []
     (render-index)))
+
 
 (defmain [&rest args]
   (let [[s (start-server :port 4000)]]

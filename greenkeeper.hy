@@ -42,10 +42,12 @@
 
 
 (defn get-plants []
-  (dict-comp
-    n
-    (get-plant-data n)
-    [n ["Bob" "Fred"]]))
+  {'plants
+   (dict-comp
+     n
+     (get-plant-data n)
+     [n ["Bob" "Fred"]])
+   'tstamp 1})
 
 (defn render-plants []
   (let [[r (Response :headers {"Content-Type" "application/json"})]]

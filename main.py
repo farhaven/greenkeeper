@@ -45,7 +45,7 @@ try:
 except Exception as err:
     print("Can't set the time: {}".format(err))
 
-adjtime(2 * 60 * 60)
+adjtime(config.timezone_offset)
 
 led = machine.Pin(2, machine.Pin.OUT)
 led(1)

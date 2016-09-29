@@ -1,5 +1,7 @@
 aps = { b"ThisIsMySSID": "ThisIsMyPassword", b"ThisIsAnOpenSSID": "" }
 
+timezone_offset = 2 * 60 * 60
+
 mqtt = {
     "host": "my.mqtt.host",
     "id": "my.id",
